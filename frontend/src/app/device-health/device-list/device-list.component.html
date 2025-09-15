@@ -1,0 +1,179 @@
+<div class="device-list-container">
+  <div class="device-list-header">
+    <h1>Device Status</h1>
+    <div class="device-list-actions">
+      <button mat-raised-button color="primary" (click)="exportData()">
+        <mat-icon>file_download</mat-icon>
+        Export
+      </button>
+    </div>
+  </div>
+
+  <div class="device-list-filters">
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Search</mat-label>
+      <input matInput #filterInput (keyup)="onSearchChange($event)" placeholder="Search by name or IP">
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Status</mat-label>
+      <mat-select (selectionChange)="onFilterChange()" value="{{filterValues.status}}">
+        <mat-option value="">All</mat-option>
+        <mat-option value="HEALTHY">Healthy</mat-option>
+        <mat-option value="DEGRADED">Degraded</mat-option>
+        <mat-option value="UNHEALTHY">Unhealthy</mat-option>
+        <mat-option value="COMPROMISED">Compromised</mat-option>
+        <mat-option value="UNKNOWN">Unknown</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Criticality</mat-label>
+      <mat-select (selectionChange)="onFilterChange()" value="{{filterValues.criticality}}">
+        <mat-option value="">All</mat-option>
+        <mat-option value="1">1</mat-option>
+        <mat-option value="2">2</mat-option>
+        <mat-option value="3">3</mat-option>
+        <mat-option value="4">4</mat-option>
+        <mat-option value="5">5</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-icon-button (click)="clearFilters()" title="Clear Filters">
+      <mat-icon>clear</mat-icon>
+    </button>
+  </div>
+
+  <div class="device-list-content">
+    <div *ngIf="loading" class="loading-indicator">
+      <mat-spinner></mat-spinner>
+      <span>Loading devices...</span>
+    </div>
+
+    <div *ngIf="!loading && dataSource.data.length === 0" class="no-devices">
+      <mat-icon>devices</mat-icon>
+      <h3>No devices found</h3>
+      <p>Try adjusting your filters or check if any devices are configured.</p>
+    </div>
+
+    <div *ngIf="!loading && dataSource.data.length > 0">
+      <mat-table [dataSource]="dataSource" matSort>
+        <!-- Name Column -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Name </th>
+          <td mat-cell *matCellDef="let device">
+            <div class="device-name">
+              <span>{{device.device?.name}}</span>
+              <span *ngIf="isDeviceStale(device)" class="stale-badge" title="Device is stale">Stale</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Type Column -->
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Type </th>
+          <td mat-cell *matCellDef="let device"> {{device.device?.type}} </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Status </th>
+          <td mat-cell *matCellDef="let device">
+            <mat-chip-list>
+              <mat-chip [color]="getStatusColor(device.status)" class="status-chip">
+                {{device.status}}
+              </mat-chip>
+            </mat-chip-list>
+          </td>
+        </ng-container>
+
+        <!-- Last Seen Column -->
+        <ng-container matColumnDef="lastSeen">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Last Seen </th>
+          <td mat-cell *matCellDef="let device"> {{formatLastSeen(device.lastSeen)}} </td>
+        </ng-container>
+
+        <!-- CPU Column -->
+        <ng-container matColumnDef="cpu">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> CPU </th>
+          <td mat-cell *matCellDef="let device">
+            <div class="metric-bar">
+              <div class="metric-bar-fill" 
+                   [style.width.%]="device.cpuPercent || 0" 
+                   [class.high]="(device.cpuPercent || 0) > 80">
+              </div>
+              <span class="metric-value">{{device.cpuPercent || 0}}%</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Memory Column -->
+        <ng-container matColumnDef="memory">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Memory </th>
+          <td mat-cell *matCellDef="let device">
+            <div class="metric-bar">
+              <div class="metric-bar-fill" 
+                   [style.width.%]="device.memoryPercent || 0" 
+                   [class.high]="(device.memoryPercent || 0) > 85">
+              </div>
+              <span class="metric-value">{{device.memoryPercent || 0}}%</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Disk Column -->
+        <ng-container matColumnDef="disk">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Disk </th>
+          <td mat-cell *matCellDef="let device">
+            <div class="metric-bar">
+              <div class="metric-bar-fill" 
+                   [style.width.%]="device.diskPercent || 0" 
+                   [class.high]="(device.diskPercent || 0) > 90">
+              </div>
+              <span class="metric-value">{{device.diskPercent || 0}}%</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Criticality Column -->
+        <ng-container matColumnDef="criticality">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Criticality </th>
+          <td mat-cell *matCellDef="let device">
+            <mat-chip-list>
+              <mat-chip [color]="getCriticalityColor(device.device?.criticality || 1)">
+                {{device.device?.criticality || 1}}
+              </mat-chip>
+            </mat-chip-list>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef> Actions </th>
+          <td mat-cell *matCellDef="let device">
+            <div class="action-buttons">
+              <button mat-icon-button (click)="openDeviceDetail(device)" title="View Details">
+                <mat-icon>info</mat-icon>
+              </button>
+              <button mat-icon-button (click)="openAlerts(device)" title="View Alerts">
+                <mat-icon>notifications</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" colspan="8">
+            No devices matching the filter "{{inputFilter}}"
+          </td>
+        </tr>
+      </mat-table>
+
+      <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" showFirstLastButtons></mat-paginator>
+    </div>
+  </div>
+</div>
