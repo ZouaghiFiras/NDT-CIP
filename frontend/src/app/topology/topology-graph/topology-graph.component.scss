@@ -1,0 +1,383 @@
+@import '~@angular/material/theming';
+
+.topology-graph-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: 16px;
+  background-color: mat-color(mat-gray, 100);
+
+  .topology-graph-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    .topology-graph-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 500;
+      }
+
+      .topology-graph-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        .status-icon {
+          font-size: 18px;
+
+          &.active {
+            color: mat-color(mat-green, 500);
+          }
+
+          &.updating {
+            color: mat-color(mat-amber, 500);
+            animation: spin 1s infinite linear;
+          }
+        }
+
+        .status-text {
+          font-size: 14px;
+          color: mat-color(mat-gray, 600);
+        }
+      }
+    }
+
+    .topology-graph-controls {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+
+      .control-group {
+        display: flex;
+        align-items: center;
+
+        .search-field {
+          width: 200px;
+        }
+      }
+    }
+  }
+
+  .topology-graph-filters {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+
+    .filter-group {
+      flex: 1;
+      min-width: 200px;
+
+      h3 {
+        margin: 0 0 8px;
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .filter-options {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        mat-checkbox {
+          display: flex;
+          align-items: center;
+
+          .color-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+          }
+        }
+      }
+    }
+  }
+
+  .topology-graph-content {
+    display: flex;
+    flex: 1;
+    gap: 16px;
+    position: relative;
+
+    .graph-container {
+      flex: 1;
+      position: relative;
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+
+      .loading-overlay,
+      .updating-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(255, 255, 255, 0.8);
+        z-index: 100;
+
+        mat-spinner {
+          margin-bottom: 8px;
+        }
+
+        span {
+          font-size: 16px;
+          color: mat-color(mat-gray, 700);
+        }
+      }
+
+      .updating-overlay {
+        background-color: rgba(255, 235, 59, 0.2);
+      }
+    }
+
+    .graph-legend {
+      width: 240px;
+      background-color: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 16px;
+      overflow-y: auto;
+
+      h3 {
+        margin: 0 0 16px;
+        font-size: 18px;
+        font-weight: 500;
+        color: mat-color(mat-gray, 800);
+      }
+
+      .legend-section {
+        margin-bottom: 24px;
+
+        h4 {
+          margin: 0 0 12px;
+          font-size: 14px;
+          font-weight: 500;
+          color: mat-color(mat-gray, 700);
+        }
+
+        .legend-item {
+          display: flex;
+          align-items: center;
+          margin-bottom: 8px;
+
+          .color-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+          }
+
+          .alert-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid mat-color(mat-amber, 500);
+            margin-right: 8px;
+            position: relative;
+
+            &::after {
+              content: '';
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              width: 8px;
+              height: 8px;
+              border-radius: 50%;
+              background-color: mat-color(mat-amber, 500);
+              animation: pulse 1.5s infinite;
+            }
+          }
+
+          span {
+            font-size: 14px;
+            color: mat-color(mat-gray, 700);
+          }
+        }
+      }
+    }
+  }
+
+  .node-detail-panel,
+  .edge-detail-panel {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 320px;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 200;
+    max-height: calc(100vh - 32px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid mat-color(mat-gray, 200);
+
+      h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 500;
+      }
+
+      button {
+        color: mat-color(mat-gray, 500);
+
+        &:hover {
+          color: mat-color(mat-gray, 700);
+        }
+      }
+    }
+
+    .panel-content {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+
+      .device-info,
+      .connection-info {
+        margin-bottom: 16px;
+
+        .info-row {
+          display: flex;
+          margin-bottom: 8px;
+
+          .label {
+            flex: 0 0 100px;
+            font-weight: 500;
+            color: mat-color(mat-gray, 700);
+          }
+
+          .value {
+            flex: 1;
+
+            &.status-badge,
+            &.criticality-badge {
+              display: inline-block;
+              padding: 2px 8px;
+              border-radius: 12px;
+              color: white;
+              font-size: 12px;
+              font-weight: 500;
+            }
+          }
+        }
+      }
+
+      .device-actions,
+      .connection-actions {
+        display: flex;
+        gap: 8px;
+
+        button {
+          flex: 1;
+        }
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// Responsive design
+@media (max-width: 1200px) {
+  .topology-graph-container {
+    .topology-graph-content {
+      flex-direction: column;
+
+      .graph-legend {
+        width: 100%;
+        max-height: 200px;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .topology-graph-container {
+    padding: 8px;
+
+    .topology-graph-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+
+      .topology-graph-controls {
+        width: 100%;
+        justify-content: flex-start;
+
+        .control-group {
+          .search-field {
+            width: 150px;
+          }
+        }
+      }
+    }
+
+    .topology-graph-filters {
+      flex-direction: column;
+      gap: 12px;
+
+      .filter-group {
+        width: 100%;
+      }
+    }
+
+    .topology-graph-content {
+      .graph-legend {
+        display: none;
+      }
+
+      .node-detail-panel,
+      .edge-detail-panel {
+        width: 100%;
+        right: 0;
+      }
+    }
+  }
+}

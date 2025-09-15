@@ -1,0 +1,239 @@
+<div class="topology-graph-container">
+  <div class="topology-graph-header">
+    <div class="topology-graph-title">
+      <h1>Network Topology</h1>
+      <div class="topology-graph-status">
+        <mat-icon class="status-icon" [class.active]="!isLoading" [class.updating]="isUpdating">
+          {{isLoading ? 'hourglass_empty' : (isUpdating ? 'sync' : 'check_circle')}}
+        </mat-icon>
+        <span class="status-text">
+          {{isLoading ? 'Loading...' : (isUpdating ? 'Updating...' : 'Live')}}
+        </span>
+      </div>
+    </div>
+
+    <div class="topology-graph-controls">
+      <div class="control-group">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search</mat-label>
+          <input matInput #searchInput placeholder="Search by name or IP">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <div class="control-group">
+        <mat-form-field appearance="outline">
+          <mat-label>Layout</mat-label>
+          <mat-select [(ngModel)]="layout" (ngModelChange)="applyLayout()">
+            <mat-option *ngFor="let option of layoutOptionsList" [value]="option.value">
+              {{option.label}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="control-group">
+        <mat-checkbox [(ngModel)]="showLabels" (ngModelChange)="applyLayout()">
+          Show Labels
+        </mat-checkbox>
+      </div>
+
+      <div class="control-group">
+        <button mat-icon-button (click)="exportTopology()" title="Export Topology">
+          <mat-icon>file_download</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="topology-graph-filters">
+    <div class="filter-group">
+      <h3>Filter by Status</h3>
+      <div class="filter-options">
+        <mat-checkbox *ngFor="let status of statusOptions" 
+                     [(ngModel)]="filterByStatus" 
+                     [value]="status.value"
+                     (ngModelChange)="applyFilters()">
+          {{status.label}}
+          <div class="color-indicator" [style.backgroundColor]="status.color"></div>
+        </mat-checkbox>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <h3>Filter by Type</h3>
+      <div class="filter-options">
+        <mat-checkbox *ngFor="let type of deviceTypeOptions" 
+                     [(ngModel)]="filterByType" 
+                     [value]="type.value"
+                     (ngModelChange)="applyFilters()">
+          {{type.label}}
+        </mat-checkbox>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <h3>Filter by Criticality</h3>
+      <div class="filter-options">
+        <mat-checkbox *ngFor="let criticality of criticalityOptions" 
+                     [(ngModel)]="filterByCriticality" 
+                     [value]="criticality.value"
+                     (ngModelChange)="applyFilters()">
+          {{criticality.label}}
+          <div class="color-indicator" [style.backgroundColor]="criticality.color"></div>
+        </mat-checkbox>
+      </div>
+    </div>
+  </div>
+
+  <div class="topology-graph-content">
+    <div class="graph-container" #cytoscapeContainer>
+      <cytoscape #cytoscape
+                [style]="{ width: '100%', height: '100%' }"
+                [layout]="layoutOptions"
+                [ready]="true"
+                [stylesheet]="stylesheet"
+                [elements]="elements">
+      </cytoscape>
+
+      <div *ngIf="isLoading" class="loading-overlay">
+        <mat-spinner></mat-spinner>
+        <span>Loading topology...</span>
+      </div>
+
+      <div *ngIf="isUpdating" class="updating-overlay">
+        <mat-spinner></mat-spinner>
+        <span>Updating topology...</span>
+      </div>
+    </div>
+
+    <div class="graph-legend">
+      <h3>Legend</h3>
+
+      <div class="legend-section">
+        <h4>Device Status</h4>
+        <div class="legend-item" *ngFor="let status of statusOptions">
+          <div class="color-indicator" [style.backgroundColor]="status.color"></div>
+          <span>{{status.label}}</span>
+        </div>
+      </div>
+
+      <div class="legend-section">
+        <h4>Connection Type</h4>
+        <div class="legend-item" *ngFor="let type of connectionTypeOptions">
+          <div class="color-indicator" [style.backgroundColor]="type.color"></div>
+          <span>{{type.label}}</span>
+        </div>
+      </div>
+
+      <div class="legend-section">
+        <h4>Criticality</h4>
+        <div class="legend-item" *ngFor="let criticality of criticalityOptions">
+          <div class="color-indicator" [style.backgroundColor]="criticality.color"></div>
+          <span>{{criticality.label}}</span>
+        </div>
+      </div>
+
+      <div class="legend-section">
+        <h4>Alerts</h4>
+        <div class="legend-item">
+          <div class="alert-indicator"></div>
+          <span>Active Alert</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="selectedNode" class="node-detail-panel">
+    <div class="panel-header">
+      <h2>Device Details</h2>
+      <button mat-icon-button (click)="selectedNode = null" title="Close">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="panel-content">
+      <div class="device-info">
+        <div class="info-row">
+          <span class="label">Name:</span>
+          <span class="value">{{selectedNode.data.name}}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Type:</span>
+          <span class="value">{{selectedNode.data.type}}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">IP Address:</span>
+          <span class="value">{{selectedNode.data.ip}}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Status:</span>
+          <span class="value status-badge" [style.backgroundColor]="statusColors[selectedNode.data.status]">
+            {{selectedNode.data.status}}
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="label">Criticality:</span>
+          <span class="value criticality-badge" [style.backgroundColor]="criticalityColors[selectedNode.data.criticality]">
+            {{selectedNode.data.criticality}}
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="label">Risk Score:</span>
+          <span class="value">{{selectedNode.data.riskScore}}</span>
+        </div>
+      </div>
+
+      <div class="device-actions">
+        <button mat-raised-button color="primary" (click)="viewDeviceDetails(selectedNode.data.id)">
+          View Details
+        </button>
+        <button mat-raised-button color="accent" (click)="viewDeviceAlerts(selectedNode.data.id)">
+          View Alerts
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="selectedEdge" class="edge-detail-panel">
+    <div class="panel-header">
+      <h2>Connection Details</h2>
+      <button mat-icon-button (click)="selectedEdge = null" title="Close">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="panel-content">
+      <div class="connection-info">
+        <div class="info-row">
+          <span class="label">Type:</span>
+          <span class="value">{{selectedEdge.data.type}}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Bandwidth:</span>
+          <span class="value">{{selectedEdge.data.bandwidth}} Mbps</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Latency:</span>
+          <span class="value">{{selectedEdge.data.latency}} ms</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Reliability:</span>
+          <span class="value">{{selectedEdge.data.reliability | percent}}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Status:</span>
+          <span class="value status-badge" [style.backgroundColor]="connectionStatusColors[selectedEdge.data.status]">
+            {{selectedEdge.data.status}}
+          </span>
+        </div>
+      </div>
+
+      <div class="connection-actions">
+        <button mat-raised-button color="primary" (click="viewConnectionDetails(selectedEdge.data.id)">
+          View Details
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
