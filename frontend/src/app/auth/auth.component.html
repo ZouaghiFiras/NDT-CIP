@@ -1,0 +1,34 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo">
+        <img src="assets/images/logo-dark.svg" alt="Network Digital Twin Cyber Insurance" class="logo-image">
+        <h1 class="auth-title">Network Digital Twin Cyber Insurance</h1>
+      </div>
+
+      <div class="auth-subtitle">
+        {{ 'auth.subtitle' | translate }}
+      </div>
+    </div>
+
+    <div class="auth-content">
+      <router-outlet></router-outlet>
+    </div>
+
+    <div class="auth-footer">
+      <div class="auth-footer-links">
+        <a (click)="navigateToLogin()" class="auth-footer-link">{{ 'auth.login' | translate }}</a>
+        <span class="auth-footer-separator">|</span>
+        <a (click)="navigateToRegister()" class="auth-footer-link">{{ 'auth.register' | translate }}</a>
+      </div>
+
+      <div class="auth-footer-language">
+        <select [(ngModel)]="currentLang" (ngModelChange)="changeLanguage($event)" class="language-select">
+          <option value="en">English</option>
+          <option value="fr">Français</option>
+          <option value="es">Español</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>

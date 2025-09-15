@@ -1,0 +1,131 @@
+<div class="layout-wrapper layout-static">
+  <div class="layout-sidebar">
+    <div class="layout-sidebar-header">
+      <div class="layout-sidebar-logo">
+        <img src="assets/images/logo-dark.svg" alt="Network Digital Twin Cyber Insurance" class="logo-image">
+        <span class="logo-text">NDT-CIP</span>
+      </div>
+      <button class="layout-sidebar-toggle-button p-link" pButton icon="pi pi-bars" (click)="sidebar.toggle()"></button>
+    </div>
+
+    <div class="layout-sidebar-content">
+      <p-tieredMenu [model]="menuItems" [popup]="true" styleClass="w-full"></p-tieredMenu>
+    </div>
+  </div>
+
+  <div class="layout-main">
+    <div class="layout-main-header">
+      <div class="layout-main-header-left">
+        <button pButton icon="pi pi-bars" class="p-button-text p-button-plain mr-2" (click)="sidebar.toggle()"></button>
+        <p-breadcrumb [model]="breadcrumbItems"></p-breadcrumb>
+      </div>
+
+      <div class="layout-main-header-right">
+        <div class="layout-main-header-right-item">
+          <p-button icon="pi pi-search" class="p-button-text p-button-plain mr-2" (click)="toggleSearch()"></p-button>
+          <p-button icon="pi pi-bell" class="p-button-text p-button-plain mr-2" (click)="toggleNotifications()"></p-button>
+          <p-button icon="pi pi-cog" class="p-button-text p-button-plain mr-2" (click)="toggleSettings()"></p-button>
+
+          <p-splitButton 
+            icon="pi pi-user" 
+            label="{{ currentUser?.username || 'User' }}" 
+            [model]="userMenuItems"
+            class="layout-user-menu">
+          </p-splitButton>
+        </div>
+      </div>
+    </div>
+
+    <div class="layout-main-content">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+
+  <p-sidebar #sidebar [(visible)]="sidebarVisible" position="left" [baseZIndex]="1000" styleClass="layout-sidebar">
+    <div class="user-profile">
+      <img src="assets/images/user-avatar.png" alt="User" class="user-avatar">
+      <div class="user-info">
+        <div class="user-name">{{ currentUser?.username || 'User' }}</div>
+        <div class="user-role">{{ currentUser?.roles?.join(', ') || 'USER' }}</div>
+      </div>
+    </div>
+
+    <div class="menu-section">
+      <div class="menu-title">Main</div>
+      <p-tieredMenu [model]="menuItems" [popup]="true" styleClass="w-full"></p-tieredMenu>
+    </div>
+  </p-sidebar>
+
+  <p-sidebar #settingsSidebar [(visible)]="settingsVisible" position="right" [baseZIndex]="1000" styleClass="layout-settings">
+    <div class="settings-header">
+      <h3>Settings</h3>
+    </div>
+
+    <div class="settings-content">
+      <div class="settings-section">
+        <h4>Theme</h4>
+        <div class="theme-options">
+          <button class="theme-option" (click)="themeService.setTheme('light')">
+            <div class="theme-preview light"></div>
+            <span>Light</span>
+          </button>
+          <button class="theme-option" (click)="themeService.setTheme('dark')">
+            <div class="theme-preview dark"></div>
+            <span>Dark</span>
+          </button>
+          <button class="theme-option" (click)="themeService.setTheme('blue')">
+            <div class="theme-preview blue"></div>
+            <span>Blue</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h4>Language</h4>
+        <p-dropdown [options]="languageOptions" [(ngModel)]="selectedLanguage" optionLabel="name" (onChange)="changeLanguage($event.value.code)"></p-dropdown>
+      </div>
+
+      <div class="settings-section">
+        <h4>Notifications</h4>
+        <div class="notification-settings">
+          <div class="notification-setting">
+            <p-checkbox [(ngModel)]="notificationSettings.email"></p-checkbox>
+            <label>Email Notifications</label>
+          </div>
+          <div class="notification-setting">
+            <p-checkbox [(ngModel)]="notificationSettings.push"></p-checkbox>
+            <label>Push Notifications</label>
+          </div>
+          <div class="notification-setting">
+            <p-checkbox [(ngModel)]="notificationSettings.sms"></p-checkbox>
+            <label>SMS Notifications</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </p-sidebar>
+
+  <p-sidebar #notificationsSidebar [(visible)]="notificationsVisible" position="right" [baseZIndex]="1000" styleClass="layout-notifications">
+    <div class="notifications-header">
+      <h3>Notifications</h3>
+      <button pButton class="p-button-text p-button-plain" (click)="clearNotifications()">Clear All</button>
+    </div>
+
+    <div class="notifications-content">
+      <div *ngFor="let notification of notifications" class="notification-item">
+        <div class="notification-icon" [ngClass]="notification.severity">
+          <i [class]="notification.icon"></i>
+        </div>
+        <div class="notification-details">
+          <div class="notification-title">{{ notification.title }}</div>
+          <div class="notification-message">{{ notification.message }}</div>
+          <div class="notification-time">{{ notification.time | date:'short' }}</div>
+        </div>
+      </div>
+
+      <div *ngIf="notifications.length === 0" class="no-notifications">
+        <p>No notifications</p>
+      </div>
+    </div>
+  </p-sidebar>
+</div>
