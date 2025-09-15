@@ -1,0 +1,170 @@
+<div class="simulation-list">
+  <div class="list-header">
+    <h1>Cybersecurity Simulation Scenarios</h1>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="createSimulation()">
+        <mat-icon>add</mat-icon>
+        Create Simulation
+      </button>
+      <button mat-raised-button color="accent" (click)="exportToCSV()">
+        <mat-icon>file_download</mat-icon>
+        Export CSV
+      </button>
+    </div>
+  </div>
+
+  <div class="list-filters" *ngIf="!isLoading">
+    <div class="filter-group">
+      <mat-form-field appearance="outline">
+        <mat-label>Type</mat-label>
+        <mat-select [(ngModel)]="typeFilter" (ngModelChange)="onFilterChange()">
+          <mat-option value="">All Types</mat-option>
+          <mat-option *ngFor="let option of typeOptions" [value]="option.value">
+            {{option.label}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="filter-group">
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+          <mat-option value="">All Statuses</mat-option>
+          <mat-option *ngFor="let option of statusOptions" [value]="option.value">
+            {{option.label}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="filter-group">
+      <mat-form-field appearance="outline">
+        <mat-label>Search</mat-label>
+        <input matInput [(ngModel)]="searchQuery" (ngModelChange)="onFilterChange()">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+    </div>
+
+    <div class="filter-group">
+      <button mat-icon-button (click)="clearFilters()">
+        <mat-icon>filter_alt</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="list-content">
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner></mat-spinner>
+      <span>Loading simulations...</span>
+    </div>
+
+    <div *ngIf="!isLoading && filteredSimulations.length === 0" class="empty-container">
+      <mat-icon>info</mat-icon>
+      <p>No simulations found</p>
+    </div>
+
+    <div *ngIf="!isLoading && filteredSimulations.length > 0" class="simulations-grid">
+      <div *ngFor="let simulation of filteredSimulations" class="simulation-card">
+        <div class="card-header">
+          <div class="simulation-name">{{simulation.name}}</div>
+          <div class="simulation-type" [ngClass]="simulationService.getTypeBadgeClass(simulation.type)">
+            {{simulation.type.replace('_', ' ')}}
+          </div>
+        </div>
+
+        <div class="card-content">
+          <div class="simulation-status" 
+               [style.backgroundColor]="simulationService.getStatusColor(simulation.status)"
+               [class.running]="simulation.status === 'RUNNING'"
+               [class.completed]="simulation.status === 'COMPLETED'"
+               [class.cancelled]="simulation.status === 'CANCELLED'"
+               [class.failed]="simulation.status === 'FAILED'"
+               [class.pending]="simulation.status === 'PENDING'">
+            <mat-icon [style.color]="simulationService.getStatusTextColor(simulation.status)">
+              {{simulationService.getStatusIcon(simulation.status)}}
+            </mat-icon>
+            <span [style.color]="simulationService.getStatusTextColor(simulation.status)">
+              {{simulation.status}}
+            </span>
+          </div>
+
+          <div class="simulation-description">
+            {{simulation.description || 'No description provided'}}
+          </div>
+
+          <div class="simulation-meta">
+            <div class="meta-item">
+              <mat-icon>schedule</mat-icon>
+              <span>{{simulation.duration}}</span>
+            </div>
+
+            <div class="meta-item">
+              <mat-icon>devices</mat-icon>
+              <span>{{simulation.targetDevices?.length || 0}} devices</span>
+            </div>
+
+            <div class="meta-item">
+              <mat-icon>person</mat-icon>
+              <span>{{simulation.createdBy?.username || 'Unknown'}}</span>
+            </div>
+          </div>
+
+          <div class="simulation-attack-vector">
+            <mat-icon>security</mat-icon>
+            <span>{{simulation.attackVector}}</span>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button mat-icon-button (click)="viewSimulationDetails(simulation)" title="View Details">
+            <mat-icon>visibility</mat-icon>
+          </button>
+
+          <button mat-icon-button (click)="editSimulation(simulation)" 
+                  *ngIf="simulation.status === 'PENDING'" 
+                  title="Edit Simulation">
+            <mat-icon>edit</mat-icon>
+          </button>
+
+          <button mat-icon-button (click)="executeSimulation(simulation)" 
+                  *ngIf="simulation.status === 'PENDING'" 
+                  title="Execute Simulation"
+                  [disabled]="isExecuting">
+            <mat-icon>play_arrow</mat-icon>
+          </button>
+
+          <button mat-icon-button (click)="cancelSimulation(simulation)" 
+                  *ngIf="simulation.status === 'RUNNING'" 
+                  title="Cancel Simulation"
+                  [disabled]="isCancelling">
+            <mat-icon>cancel</mat-icon>
+          </button>
+
+          <button mat-icon-button (click)="deleteSimulation(simulation)" 
+                  *ngIf="simulation.status === 'PENDING'" 
+                  title="Delete Simulation">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="list-footer" *ngIf="!isLoading && filteredSimulations.length > 0">
+    <div class="pagination-info">
+      Showing {{filteredSimulations.length}} of {{totalItems}} simulations
+    </div>
+
+    <div class="pagination-controls">
+      <button mat-icon-button (click)="page = Math.max(1, page - 1)" [disabled]="page === 1">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+
+      <button mat-icon-button (click)="page = Math.min(Math.ceil(totalItems / pageSize), page + 1)" 
+              [disabled]="page >= Math.ceil(totalItems / pageSize)">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>
