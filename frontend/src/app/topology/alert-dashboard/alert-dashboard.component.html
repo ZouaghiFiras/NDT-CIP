@@ -1,0 +1,146 @@
+<div class="alert-dashboard">
+  <div class="dashboard-header">
+    <h1>Topology Validation Dashboard</h1>
+    <div class="dashboard-actions">
+      <button mat-raised-button color="primary" (click)="loadAlerts()">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+      <button mat-raised-button color="accent" (click)="clearFilters()">
+        <mat-icon>filter_alt</mat-icon>
+        Clear Filters
+      </button>
+    </div>
+  </div>
+
+  <div class="dashboard-stats" *ngIf="!isLoading">
+    <div class="stat-card">
+      <div class="stat-value">{{alertStatistics.totalAlerts || 0}}</div>
+      <div class="stat-label">Total Alerts</div>
+    </div>
+    <div class="stat-card critical">
+      <div class="stat-value">{{alertStatistics.alertsBySeverity?.CRITICAL || 0}}</div>
+      <div class="stat-label">Critical</div>
+    </div>
+    <div class="stat-card high">
+      <div class="stat-value">{{alertStatistics.alertsBySeverity?.HIGH || 0}}</div>
+      <div class="stat-label">High</div>
+    </div>
+    <div class="stat-card medium">
+      <div class="stat-value">{{alertStatistics.alertsBySeverity?.MEDIUM || 0}}</div>
+      <div class="stat-label">Medium</div>
+    </div>
+    <div class="stat-card low">
+      <div class="stat-value">{{alertStatistics.alertsBySeverity?.LOW || 0}}</div>
+      <div class="stat-label">Low</div>
+    </div>
+    <div class="stat-card unresolved">
+      <div class="stat-value">{{alertStatistics.unresolvedAlerts || 0}}</div>
+      <div class="stat-label">Unresolved</div>
+    </div>
+  </div>
+
+  <div class="dashboard-filters" *ngIf="!isLoading">
+    <div class="filter-group">
+      <mat-form-field appearance="outline">
+        <mat-label>Severity</mat-label>
+        <mat-select [(ngModel)]="severityFilter" (ngModelChange)="onFilterChange()">
+          <mat-option value="">All Severities</mat-option>
+          <mat-option *ngFor="let option of severityOptions" [value]="option.value">
+            {{option.label}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="filter-group">
+      <mat-form-field appearance="outline">
+        <mat-label>Alert Type</mat-label>
+        <mat-select [(ngModel)]="alertTypeFilter" (ngModelChange)="onFilterChange()">
+          <mat-option value="">All Types</mat-option>
+          <mat-option *ngFor="let option of alertTypeOptions" [value]="option.value">
+            {{option.label}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="filter-group">
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [(ngModel)]="resolvedFilter" (ngModelChange)="onFilterChange()">
+          <mat-option value="">All Statuses</mat-option>
+          <mat-option [value]="false">Unresolved</mat-option>
+          <mat-option [value]="true">Resolved</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <div class="alerts-container">
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner></mat-spinner>
+      <span>Loading alerts...</span>
+    </div>
+
+    <div *ngIf="!isLoading && filteredAlerts.length === 0" class="empty-container">
+      <mat-icon>info</mat-icon>
+      <p>No alerts found</p>
+    </div>
+
+    <div *ngIf="!isLoading && filteredAlerts.length > 0" class="alerts-list">
+      <div *ngFor="let alert of filteredAlerts" class="alert-item" 
+           [class.resolved]="alert.resolved"
+           [class.unresolved]="!alert.resolved">
+
+        <div class="alert-header">
+          <div class="alert-severity" 
+               [style.backgroundColor]="getSeverityColor(alert.severity)"
+               [class.critical]="alert.severity === 'CRITICAL'"
+               [class.high]="alert.severity === 'HIGH'"
+               [class.medium]="alert.severity === 'MEDIUM'"
+               [class.low]="alert.severity === 'LOW'">
+            <mat-icon [style.color]="getSeverityTextColor(alert.severity)">
+              {{getSeverityIcon(alert.severity)}}
+            </mat-icon>
+            <span [style.color]="getSeverityTextColor(alert.severity)">
+              {{alert.severity}}
+            </span>
+          </div>
+
+          <div class="alert-type" [ngClass]="getAlertTypeBadgeClass(alert.alertType)">
+            {{alert.alertType.replace('_', ' ')}}
+          </div>
+
+          <div class="alert-timestamp">
+            {{alert.timestamp | date:'MMM d, y HH:mm'}}
+          </div>
+        </div>
+
+        <div class="alert-message">
+          {{alert.message}}
+        </div>
+
+        <div class="alert-actions">
+          <button mat-icon-button (click)="viewAlertDetails(alert)" title="View Details">
+            <mat-icon>visibility</mat-icon>
+          </button>
+
+          <button mat-icon-button (click)="resolveAlert(alert)" 
+                  *ngIf="!alert.resolved" 
+                  title="Resolve Alert"
+                  [disabled]="isResolving">
+            <mat-icon>check_circle</mat-icon>
+          </button>
+
+          <button mat-icon-button (click)="unresolveAlert(alert)" 
+                  *ngIf="alert.resolved" 
+                  title="Unresolve Alert"
+                  [disabled]="isResolving">
+            <mat-icon>replay</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
