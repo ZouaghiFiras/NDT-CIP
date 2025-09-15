@@ -1,0 +1,61 @@
+# Production Configuration
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  # Database Configuration for Production
+  datasource:
+    url: jdbc:postgresql://${PROD_DB_HOST:localhost}:${PROD_DB_PORT:5432}/${PROD_DB_NAME:network_twin_prod}
+    username: ${PROD_DB_USERNAME:postgres}
+    password: ${PROD_DB_PASSWORD:production_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+      connection-test-query: SELECT 1
+
+  # JPA/Hibernate Configuration for Production
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        jdbc:
+          batch_size: 50
+          order_inserts: true
+          order_updates: true
+
+  # Logging Configuration for Production
+  logging:
+    level:
+      root: WARN
+      com.network.digitaltwin: WARN
+      org.springframework.security: WARN
+    file:
+      name: /var/log/network-twin/network-twin.log
+      max-size: 50MB
+      max-history: 90
+      total-size-cap: 1GB
+    logback:
+      rollingpolicy:
+        max-history: 90
+        clean-history-on-start: true
+
+# JWT Configuration for Production
+jwt:
+  secret: ${JWT_SECRET:productionSecretKey}
+  access-token-expiration: 43200000  # 12 hours
+  refresh-token-expiration: 2592000000  # 30 days
+
+# Security Configuration for Production
+security:
+  jwt:
+    header: Authorization
+    prefix: Bearer 
+    expiration: 43200  # in seconds (12 hours)

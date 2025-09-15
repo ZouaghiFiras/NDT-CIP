@@ -1,0 +1,44 @@
+# Staging Configuration
+spring:
+  config:
+    activate:
+      on-profile: staging
+
+  # Database Configuration for Staging
+  datasource:
+    url: jdbc:postgresql://${STAGING_DB_HOST:localhost}:${STAGING_DB_PORT:5432}/${STAGING_DB_NAME:network_twin_staging}
+    username: ${STAGING_DB_USERNAME:postgres}
+    password: ${STAGING_DB_PASSWORD:staging_password}
+    driver-class-name: org.postgresql.Driver
+
+  # JPA/Hibernate Configuration for Staging
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+
+  # Logging Configuration for Staging
+  logging:
+    level:
+      root: INFO
+      com.network.digitaltwin: INFO
+      org.springframework.security: WARN
+      org.hibernate.SQL: WARN
+      org.hibernate.type.descriptor.sql.BasicBinder: WARN
+
+# JWT Configuration for Staging
+jwt:
+  secret: ${JWT_SECRET:stagingSecretKey}
+  access-token-expiration: 7200000  # 2 hours
+  refresh-token-expiration: 2592000000  # 30 days
+
+# Security Configuration for Staging
+security:
+  jwt:
+    header: Authorization
+    prefix: Bearer 
+    expiration: 7200  # in seconds (2 hours)
